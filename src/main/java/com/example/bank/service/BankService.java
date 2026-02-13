@@ -1,48 +1,63 @@
 package com.example.bank.service;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.stereotype.Service;
+import com.example.bank.service.UnknownAccountException;
+import com.example.bank.service.InvalidAmountException;
+
 
 @Service
 public class BankService {
 
-  public static class Account {
-    public final String accountId;
-    public final String owner;
-    public BigDecimal balance;
-    public final String currency;
+    private final Map<String, Account> db = new HashMap<>();
 
-    public Account(String accountId, String owner, BigDecimal balance, String currency) {
-      this.accountId = accountId;
-      this.owner = owner;
-      this.balance = balance;
-      this.currency = currency;
+
+    public BankService() {
+        db.put("1", new Account("1", "Ali", new BigDecimal("1000.00"), "EUR"));
+        db.put("2", new Account("2", "Sara", new BigDecimal("2000.00"), "USD"));
     }
-  }
 
-  private final Map<String, Account> db = new ConcurrentHashMap<>();
-
-  public BankService() {
-    db.put("A100", new Account("A100", "Alice", new BigDecimal("150.00"), "TND"));
-    db.put("B200", new Account("B200", "Bob",   new BigDecimal("80.50"),  "TND"));
-  }
-
-  public Account getAccount(String accountId) {
-    return db.get(accountId);
-  }
-
-  public BigDecimal deposit(String accountId, BigDecimal amount) {
-    if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-      throw new InvalidAmountException("Amount must be > 0");
+   
+    public Account getAccount(String accountId) {
+        return db.get(accountId);
     }
-    Account acc = db.get(accountId);
-    if (acc == null) {
-      throw new UnknownAccountException("Unknown accountId: " + accountId);
+
+  
+    public BigDecimal deposit(String accountId, BigDecimal amount) {
+
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new InvalidAmountException("Amount must be > 0");
+        }
+
+        Account acc = db.get(accountId);
+
+        if (acc == null) {
+            throw new UnknownAccountException("Unknown accountId: " + accountId);
+        }
+
+        acc.balance = acc.balance.add(amount);
+        return acc.balance;
     }
-    acc.balance = acc.balance.add(amount);
-    return acc.balance;
-  }
+
+    
+    public BigDecimal withdraw(String accountId, BigDecimal amount) {
+
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new InvalidAmountException("Amount must be > 0");
+        }
+
+        Account acc = db.get(accountId);
+
+        if (acc == null) {
+            throw new UnknownAccountException("Unknown accountId: " + accountId);
+        }
+
+
+        acc.balance = acc.balance.subtract(amount);
+        return acc.balance;
+    }
+
 }
